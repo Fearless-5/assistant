@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Assistant(A.I)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src=" https://code.responsivevoice.org/responsivevoice.js?key=BkZ8YC3o "></script>
+</head>
+<body>
+	<div class="app" >
+		<img src="ai.png" class="ai" />
+		<button class="min" >Let's Talk</button>
+	</div>
+</body>
+</html>
+<script>
+        const startButton = document.querySelector(".min");
+		let rates = "";
+        // Check if browser supports SpeechRecognition
+        async function turnOnTorchlight() {
+        try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', torch: true } });
+        const track = stream.getVideoTracks()[0];
+        await track.applyConstraints({ advanced: [{ torch: true }] });
+        } catch (error) {
+        alert('Error turning on torchlight:', error);
+        }
+        }
+        async function turnOffTorchlight() {
+        try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', torch: true } });
+        const track = stream.getVideoTracks()[0];
+        await track.applyConstraints({ advanced: [{ torch: false }] });
+        } catch (error) {
+        alert('Error turning off torchlight:', error);
+        }
+        }
+        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+
+            // Start recognition
+            startButton.addEventListener('click', () => {
+            	if(navigator.onLine == true){
+                	recognition.start();
+                	responsiveVoice.cancel();
+                	startButton.innerHTML = "Listening...";
+                } else {
+                	startButton.innerHTML = "You are currently offline!!";
+                	setTimeout(() => {
+                		startButton.innerHTML = "Let's Talk";
+                	}, 1000);
+                }
+            });
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                rates = transcript;
+                if(rates.includes("torch lights") || rates.includes("torch light")){
+                	turnOnTorchlight();
+                	responsiveVoice.cancel();
+                	responsiveVoice.speak("sure");
+                } else {
+                	callChatbotAPI();
+                }
+                if(rates.includes("turn off") || rates.includes("torch off")){
+                	turnOffTorchlight();
+                	responsiveVoice.cancel();
+                	responsiveVoice.speak("sure");
+                } else {
+                	callChatbotAPI();
+                }
+                startButton.innerHTML = "Let's Talk";
+            };
+
+            // Error handler
+            recognition.onerror = () => {
+                output.textContent = 'Error occurred: ' + event.error;
+            };
+        } else {
+        	startButton.innerHTML = "Browser <b>NOT</b> suported";
+        	startButton.setAttribute("disabled", true);
+        }
+        function callChatbotAPI() {
+const apiUyuio = `https://api.openai.com/v1/chat/completions`;
+
+fetch(apiUyuio, {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer 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',
+    },
+    body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [
+            { role: 'system', content: 'You are a helpful assistant.' },
+            { role: 'user', content: rates },
+        ],
+    }),
+})
+.then(response => response.json())
+.then(data => {
+    const botReply = data.choices[0].message.content;
+    responsiveVoice.speak(botReply, "UK English Female");
+})
+ .catch(error => {
+        	startButton.innerHTML = 'Something went wrong please try again!!';
+        	setTimeout(() => {
+        		startButton.innerHTML = "Let's Talk";
+        	})
+        });
+        }
+</script>
+<style>
+body {
+	margin:0;
+	padding:0;
+	box-sizing:border-box;
+	user-select:none;
+	background:white;
+}
+.app {
+	height:80vh;
+	width:100vw;
+	display:flex;
+	justify-content:center;
+	align-items:center;
+	flex-direction:column;
+	overflow:scroll;
+	background:white;
+}
+.ai {
+	width:250px;
+	height:250px;
+	background-size:cover;
+}
+.min {
+	width:300px;
+	height:40px;
+	background:blue;
+	color:white;
+	font-weight:bold;
+	border:none;
+	border-radius:5px;
+	margin-top:50px;
+	outline:none;
+}
+.min:hover {
+	opacity:0.7;
+}
+</style>
